@@ -37,4 +37,9 @@ export class ProductsService {
   getAllProducts() {
     return this.Products;
   }
+
+  // 根据商品id寻找某个商品
+  findOne(id: number) {
+    return this.Products.find((product) => product.id == id);
+  }
 }
