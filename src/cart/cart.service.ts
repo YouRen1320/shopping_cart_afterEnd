@@ -13,7 +13,16 @@ export class CartService {
 
   // 2.添加数据到数据库中,item是用户传输的数据
   addToCart(item: createCartDto) {
-    this.cart.push(item);
+    const existingItem = this.cart.find(
+      (item) => item.productId === item.productId,
+    );
+    // 判断购物车是否有这个商品，如果有数量加1
+    if (existingItem) {
+      existingItem.quantity += item.quantity;
+    } else {
+      // 如果没有这个商品，就把商品添加到购物车中
+      this.cart.push(item);
+    }
     return '商品已添加到购物车！';
   }
 
