@@ -1,15 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { createCartDto } from './dto/create-cart.dto';
 import { ProductsService } from 'src/products/products.service'; //引入商品逻辑函数
+import * as fs from 'fs'; //引入node.js中自带的文件操作模块
+import * as path from 'path';
 
 @Injectable()
 export class CartService {
   // 1.模拟数据库
   private cart: createCartDto[] = [];
+  // 定义存档文件的位置：在项目根目录下创建一个data.json
+  private readonly filePath = path.join(process.cwd(), 'data.json');
 
   // nestjs最强大地方就在于依赖注入，我们引用了商品模块的函数，所以在购物车模块，我们需要注入进来
   // 注入 ProductsService 这样我们就能在购物车里，使用商品部的能力
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(private readonly productsService: ProductsService) {
+    // 服务启动时，尝试读取"存档"
+    this.loadCart();
+  }
 
   // 2.添加数据到数据库中,item是用户传输的数据
   addToCart(item: createCartDto) {
@@ -23,6 +30,7 @@ export class CartService {
       // 如果没有这个商品，就把商品添加到购物车中
       this.cart.push(item);
     }
+    this.saveCart();
     return '商品已添加到购物车！';
   }
 
@@ -54,5 +62,25 @@ export class CartService {
       items: items, //某个商品全部信息
       totalPrice: total, //购物车总价格
     };
+  }
+
+  // 4.清空购物车
+  clearCart() {
+    this.cart = [];
+    this.saveCart();
+  }
+
+  // 辅助方法(读写文件)
+  private saveCart() {
+    // 把内存里的数组，转换为字符串，写进文件
+    fs.writeFileSync(this.filePath, JSON.stringify(this.cart, null, 2));
+  }
+
+  private loadCart() {
+    // 如果文件存在，就读出来
+    if (fs.existsSync(this.filePath)) {
+      const date = fs.readFileSync(this.filePath, 'utf-8');
+      this.cart = JSON.parse(date) as createCartDto[];
+    }
   }
 }
