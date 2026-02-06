@@ -54,4 +54,12 @@ export class OrdersService {
       orderId: newOrder.id,
     };
   }
+
+  // 查看所有订单
+  findAll() {
+    if (fs.existsSync(this.filePath)) {
+      return JSON.parse(fs.readFileSync(this.filePath, 'utf8')) as orders[];
+    }
+    return [];
+  }
 }
