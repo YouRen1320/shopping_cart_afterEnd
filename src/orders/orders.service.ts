@@ -2,20 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 import { CartService } from 'src/cart/cart.service';
-
-interface CartItem {
-  title: string;
-  price: number;
-  quantity: number;
-  subtotal: number;
-}
-
-interface orders {
-  id: number;
-  date: string;
-  items: CartItem[];
-  totalPrice: number;
-}
+import { OrdersDto } from './dto/orders.dto';
 
 @Injectable()
 export class OrdersService {
@@ -33,16 +20,18 @@ export class OrdersService {
       return { message: '购物车是空的，无法下单' };
     }
     // 2.否则生成一个新的订单对象
-    const newOrder: orders = {
+    const newOrder: OrdersDto = {
       id: Date.now(), // 用时间戳随机模拟一个订单号
       date: new Date().toISOString(), //下单时间
       items: cartData.items, //商品列表
       totalPrice: cartData.totalPrice, //订单总价
     };
     // 3.如果有旧订单的话，把新订单追加进去
-    let orders: orders[] = [];
+    let orders: OrdersDto[] = [];
     if (fs.existsSync(this.filePath)) {
-      orders = JSON.parse(fs.readFileSync(this.filePath, 'utf-8')) as orders[];
+      orders = JSON.parse(
+        fs.readFileSync(this.filePath, 'utf-8'),
+      ) as OrdersDto[];
     }
     orders.push(newOrder);
     // 4.保存订单文件
@@ -58,7 +47,7 @@ export class OrdersService {
   // 查看所有订单
   findAll() {
     if (fs.existsSync(this.filePath)) {
-      return JSON.parse(fs.readFileSync(this.filePath, 'utf8')) as orders[];
+      return JSON.parse(fs.readFileSync(this.filePath, 'utf8')) as OrdersDto[];
     }
     return [];
   }
