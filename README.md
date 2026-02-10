@@ -34,3 +34,7 @@ nest g resource cart
 让购物车可以调用商品
 需要在商品module中把商品暴露出去
 然后在购物车中调用商品函数
+
+为了数据安全，我们需要引入管道，管道的作用就是转换数据和验证数据是否合规
+pnpm add class-validator class-transformer 
+然后我们需要在main.ts中设置全局验证管道
