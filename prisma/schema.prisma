@@ -1,0 +1,33 @@
+// 指定数据库类型 以后在nestjs里面写代码，输入this.prisma.product 编译器会自动弹出商品表的提示
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 数据源配置 provider明确告诉prisma我们要链接的是哪个数据库，url指定prisma，我们要从哪个文件中读取数据库账户密码，然后进行连接
+// 这里的报错不需要管，最新版的Prisma7已经不需要在这里配置url，只需要在prisma.config.ts中配置就行了
+datasource db {
+  provider = "postgresql"
+}
+
+// 定义商品表 prisma的语法非常直观 字段名+字段类型+装饰器
+// 1.核心身份类（最常用）
+// @id 定义主键 一个模型必须有且只有一个 @unique 唯一约束 防止2个用户用同一个字段注册 主键有2个规则：唯一性 全表不能有2个相同的主键 非空性 主键不能为空
+// @default(...) 默认值 常用值：autoincrement() 数字自增 uuid() 生成一串长字符串ID now() 当前时间 true/false 布尔值
+
+// 2.数据约束类 约束规定了哪些数据可以存进去，哪些数据会被拒绝 唯一约束的意思是，该表字段的数据是唯一的，类似每个人的身份证。
+// @map("db_name") 改名部 代码里想交createAt(小驼峰)，但某些数据库老旧，要求字段必须交created_at。用这个装饰器可以完美映射
+// @relation(...) 定义关系 用于告诉Prisma这个表和另一个表是怎么关联的
+
+// 3.模型级装饰器（写在模型最底部）
+// @@map("products") Prisma默认表名和模型名一样，但是通常数据库表习惯用复数且小写
+// @@index([name]) 给name字段加索引，如果商品有几十万个，加了索引，搜索名字速度会变得非常快
+
+// 唯一标识找id。想要自增autoincrement 不想重复加@unique，默认数值用@default 可有可无带个？ 时间更新使用@updateAt
+model Product {
+  id          Int      @id @default(autoincrement()) //自动增长的主键ID，主键是表中每一行记录的唯一标识符
+  name        String //商品名称
+  price       Decimal //商品价格
+  description String? //商品描述(可选)
+  createdAt   DateTime @default(now()) //创建时间，自动生成
+  updatedAt   DateTime @updatedAt //更新时间，自动生成。每当你修改这个字段，会自动生成更新时间，默认的更新时间与createdAt一致 当你第一次插入数据时，数据库会同时生成这两个时间，所以它们几乎一模一样
+}

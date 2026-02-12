@@ -36,6 +36,25 @@ nest g resource cart
 然后在购物车中调用商品函数
 
 为了数据安全，我们需要引入管道，管道的作用就是转换数据和验证数据是否合规
-pnpm add class-validator class-transformer 
+pnpm add class-validator class-transformer
 然后我们需要在main.ts中设置全局验证管道
 管道的作用就是在数据发送到业务层前判断数据格式是否合规用的，防止接口得到不正常的数据
+
+然后我们开始连接数据库 NestJS + PostgreSQL + Prisma + Docker
+新建docker-compose.yml文件，在文件中配置docker信息
+使用docker compose up -d 启动docker
+
+数据库启动以后，我们开始配置orm,orm我们使用prisma
+pnpm add -D prisma
+pnpm add @prisma/client
+初始化 npx prisma init
+初始化后，项目会多一个prisma文件夹和一个.env文件
+打开.env文件，找到database，修改为在docker-compose配置的账户和密码
+格式: postgresql://账号:密码@localhost:端口/库名
+然后在prisma/schema.prisma 里定义数据模型
+数据模型定义好以后，使用命令让Prisma去数据库中真正的创建这张表，使用下面的命令
+npx prisma migrate dev --name init // migrate dev 开发模式迁移 --name init 给这次修改起名，比如说初始化
+// 开发模式迁移就是数据库的版本控制系统(git) 会把数据库每一次的改动记录成档案
+// 开发模式会对比现在的和实际情况，然后把改动翻译成数据库听得懂的SQL语句，并存入prisma/migrations文件中 然后在数据库执行这些SQL语句，让表结构真正的发生变化 --name init 就像 Git 的 Commit Message
+
+Prisma 7更新以后，url      = env("DATABASE_URL")的配置现在在prisma.config.ts中了，不去schema.prisame中修改
