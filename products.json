@@ -1,17 +1,1 @@
-[
-  {
-    "id": 1,
-    "name": "iPhone 15",
-    "price": 5999
-  },
-  {
-    "id": 2,
-    "name": "MacBook Pro",
-    "price": 12999
-  },
-  {
-    "id": 3,
-    "name": "AirPods",
-    "price": 1299
-  }
-]
+[{"id":1,"name":"iPhone 15","price":5999},{"id":2,"name":"MacBook Pro","price":12999},{"id":3,"name":"AirPods","price":1299},{"id":1770866705893,"title":"MacBook air","price":5349},{"id":1770866746290,"title":"MacBook air","price":0.5},{"id":1770866749037,"title":"MacBook air","price":0.5}]

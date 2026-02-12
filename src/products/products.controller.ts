@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ProductsService } from './products.service';
+import { CreateProductDto } from './dto/ create-product.dto';
 
 @Controller('products') //1.这里定义了路由前缀，访问这个接口的时候，就是/products。告诉 Nest，凡是地址是 /products 的请求都来找我。
 export class ProductsController {
@@ -16,7 +17,10 @@ export class ProductsController {
   }
 
   @Post()
-  create(@Body() body: { title: string; price: number }) {
-    return this.productsService.createProduct(body.title, body.price);
+  create(@Body() createProductDto: CreateProductDto) {
+    return this.productsService.createProduct(
+      createProductDto.name,
+      createProductDto.price,
+    );
   }
 }

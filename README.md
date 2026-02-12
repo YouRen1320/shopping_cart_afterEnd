@@ -38,3 +38,4 @@ nest g resource cart
 为了数据安全，我们需要引入管道，管道的作用就是转换数据和验证数据是否合规
 pnpm add class-validator class-transformer 
 然后我们需要在main.ts中设置全局验证管道
+管道的作用就是在数据发送到业务层前判断数据格式是否合规用的，防止接口得到不正常的数据

@@ -19,7 +19,7 @@ export class ProductsService {
   // 定义一个私有的，只读的实例属性用于保存商品的实际所在路径，products.json 将路径拼接起来(当前工作路径和文件名拼接起来)
   // /Users/youren/Desktop/Project/.../products.json 绝对路径
   // process.cwd()：永远指向项目根目录
-  private readonly filePath = path.join(process.cwd() + 'products.json');
+  private readonly filePath = path.join(process.cwd(), 'products.json');
 
   //商品数据列表
   private Products: Product[] = [];
