@@ -56,5 +56,8 @@ pnpm add @prisma/client
 npx prisma migrate dev --name init // migrate dev 开发模式迁移 --name init 给这次修改起名，比如说初始化
 // 开发模式迁移就是数据库的版本控制系统(git) 会把数据库每一次的改动记录成档案
 // 开发模式会对比现在的和实际情况，然后把改动翻译成数据库听得懂的SQL语句，并存入prisma/migrations文件中 然后在数据库执行这些SQL语句，让表结构真正的发生变化 --name init 就像 Git 的 Commit Message
-
 Prisma 7更新以后，url      = env("DATABASE_URL")的配置现在在prisma.config.ts中了，不去schema.prisame中修改
+如果显示 All migrations have been successfully applied，那么PostgreSQL 里已经有一张 Product 表了。
+
+为了能在 Service 里优雅地使用 Prisma，我们需要把它封装成一个 NestJS 的 Service
+在 src 下新建一个文件 prisma.service.ts，把它注册成一个全局模块
