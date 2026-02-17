@@ -12,9 +12,9 @@ export class OrdersService {
   constructor(private readonly cartService: CartService) {}
 
   // 创建订单
-  createOrder() {
-    // 1.从当前购物车获取当前商品和总价
-    const cartData = this.cartService.getCart();
+  async createOrder() {
+    // 1.从当前购物车获取当前商品和总价（getCart 是异步的，需要 await）
+    const cartData = await this.cartService.getCart();
     // 如果购物车是空的，禁止用户创建订单
     if (cartData.items.length === 0) {
       return { message: '购物车是空的，无法下单' };

@@ -15,9 +15,7 @@ nestjs最基础的三个概念
 
 使用nest cli快速创建结构
 nest g resource products
-此时终端会问你2个问题
-1.使用什么作为传输层？ REST API
-2.是否生成增删改查模版？n
+此时终端会问你2个问题1.使用什么作为传输层？ REST API 2.是否生成增删改查模版？n
 
 同时nestjs非常智能，他会自动把模块注册到app.module.ts中。
 
@@ -68,9 +66,122 @@ Prisma 7更新以后，url = env("DATABASE_URL")的配置现在在prisma.config.
 在 src 下新建一个文件 prisma.service.ts，封装成全局的prisma依赖，供其他地方注入调用
 Prisma 7 的关键变化：不再支持直连数据库，需要通过 Driver Adapter 连接
 在 prisma.service.ts 中：
+
 1. 用 pg 的 Pool 创建数据库连接池
 2. 用 @prisma/adapter-pg 的 PrismaPg 创建适配器
 3. 在 super() 中传入 { adapter } 完成初始化
-封装好以后，我们需要新建一个src/prisma.module.ts 这个模块的目的是把上述的prisma注册成全局模块，像其他模块一样，注册成模块才能供其他的地方使用，并且不用import
+   封装好以后，我们需要新建一个src/prisma.module.ts 这个模块的目的是把上述的prisma注册成全局模块，像其他模块一样，注册成模块才能供其他的地方使用，并且不用import
 
 注册成功以后，我们就可以改造其他模块的操作了，从fs文件读写逻辑，全部换成数据库操作
+在其他模块使用的话，先constructor(private prisma: PrismaService) {} 注入prisma，就可以使用了，依赖注入
+
+下面是prisma的方法：
+// 查所有商品
+this.prisma.product.findMany()
+
+// 加条件：查价格大于 100 的商品
+this.prisma.product.findMany({
+where: { price: { gt: 100 } }
+})
+
+// 排序：按价格从低到高
+this.prisma.product.findMany({
+orderBy: { price: 'asc' } // 'desc' 就是从高到低
+})
+
+// 分页：跳过前5条，取10条（第2页，每页10条）
+this.prisma.product.findMany({
+skip: 5,
+take: 10
+})
+
+// 只返回部分字段
+this.prisma.product.findMany({
+select: { name: true, price: true } // 只要名字和价格
+})
+// 根据 id 查（id 是 @id 主键，天然唯一）
+this.prisma.product.findUnique({
+where: { id: 1 }
+})
+// 找不到会返回 null
+// 找第一个名字叫"苹果"的商品
+this.prisma.product.findFirst({
+where: { name: '苹果' }
+})
+// 和 findUnique 的区别：findUnique 只能用唯一字段（如 id）
+// findFirst 可以用任何字段
+
+this.prisma.product.create({
+data: {
+name: '苹果',
+price: 5.5,
+description: '新鲜红富士', // 可选字段
+}
+})
+// id、createdAt、updatedAt 自动生成，不用传
+
+this.prisma.product.createMany({
+data: [
+{ name: '苹果', price: 5.5 },
+{ name: '香蕉', price: 3.0 },
+{ name: '橘子', price: 4.0 },
+]
+})
+// 一次插入多条，比循环调用 create 快很多
+
+// 把 id=1 的商品价格改成 9.9
+this.prisma.product.update({
+where: { id: 1 }, // 找到谁
+data: { price: 9.9 } // 改什么
+})
+
+// 所有价格低于 5 的商品，价格统一改成 5
+this.prisma.product.updateMany({
+where: { price: { lt: 5 } },
+data: { price: 5 }
+})
+
+// 删除 id=1 的商品
+this.prisma.product.delete({
+where: { id: 1 }
+})
+
+// 删除所有没有描述的商品
+this.prisma.product.deleteMany({
+where: { description: null }
+})
+
+// 删除全部（危险！）
+this.prisma.product.deleteMany()
+
+// 一共有多少商品
+this.prisma.product.count()
+
+// 价格大于 10 的有几个
+this.prisma.product.count({
+where: { price: { gt: 10 } }
+})
+
+六、where 条件速查表
+where 里除了直接 = 等于，还支持很多条件运算符：
+
+写法 含义 SQL 等价
+{ price: 10 } 等于 price = 10
+{ price: { gt: 10 } } 大于 price > 10
+{ price: { gte: 10 } } 大于等于 price >= 10
+{ price: { lt: 10 } } 小于 price < 10
+{ price: { lte: 10 } } 小于等于 price <= 10
+{ name: { contains: '苹' } } 包含 name LIKE '%苹%'
+{ name: { startsWith: '苹' } } 开头 name LIKE '苹%'
+{ price: { in: [5, 10, 15] } } 在列表中 price IN (5, 10, 15)
+{ description: null } 为空 description IS NULL
+{ NOT: { price: 10 } } 不等于 price != 10
+{ OR: [{ price: 5 }, { price: 10 }] } 或 price=5 OR price=10
+
+记忆口诀
+增用
+create
+，删用 delete，改用 update，查用
+find
+
+操作多条加 Many，条件写在 where 里，数据写在 data 里

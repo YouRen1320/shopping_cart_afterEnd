@@ -6,7 +6,7 @@ export class OrdersDto {
 }
 
 export class CartItem {
-  title: string;
+  name: string;
   price: number;
   quantity: number;
   subtotal: number;

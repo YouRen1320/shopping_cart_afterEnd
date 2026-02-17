@@ -35,25 +35,29 @@ export class CartService {
   }
 
   // 3.查看购物车
-  getCart() {
+  async getCart() {
     // 这里的逻辑是：遍历用户购物车里面的每一项，根据用户购物车的id，去商品的数据库里面查找这个商品详情，然后计算总价
     // items是用户购物车所有的商品
-    const items = this.cart
-      .map((item) => {
-        // 查找用户购物车商品
-        const product = this.productsService.findOne(item.productId);
+    // 因为 findOne 是异步的（要去数据库查），所以 map 回调也要用 async，最后用 Promise.all 等所有查询完成
+    const items = (
+      await Promise.all(
+        this.cart.map(async (item) => {
+          // 查找用户购物车商品（await 等数据库返回结果）
+          const product = await this.productsService.findOne(item.productId);
 
-        // 如果商品不存在，就给个错误提示
-        if (!product) return null;
+          // 如果商品不存在，就给个错误提示
+          if (!product) return null;
 
-        return {
-          title: product.title, //商品名称
-          price: product.price, //商品价格
-          quantity: item.quantity, //商品数量
-          subtotal: product.price * item.quantity, //某个商品的总计价格（单价*数量）
-        };
-      })
-      .filter((item) => item !== null); //过滤找不到的商品
+          const price = Number(product.price); // Decimal 转 number 才能做运算
+          return {
+            name: product.name, //商品名称
+            price: price, //商品价格
+            quantity: item.quantity, //商品数量
+            subtotal: price * item.quantity, //某个商品的总计价格（单价*数量）
+          };
+        }),
+      )
+    ).filter((item) => item !== null); //过滤找不到的商品
 
     // total 计算购物车的金额
     const total = items.reduce((sum, item) => sum + item.subtotal, 0);
