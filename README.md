@@ -60,4 +60,5 @@ Prisma 7更新以后，url      = env("DATABASE_URL")的配置现在在prisma.co
 如果显示 All migrations have been successfully applied，那么PostgreSQL 里已经有一张 Product 表了。
 
 为了能在 Service 里优雅地使用 Prisma，我们需要把它封装成一个 NestJS 的 Service
-在 src 下新建一个文件 prisma.service.ts，把它注册成一个全局模块
+在 src 下新建一个文件 prisma.service.ts，封装成全局的prisam依赖，供其他地方注入调用
+封装好以后，我们需要新建一个src/prisma.module.ts 这个模块的目的是把上述的prisma注册成全局模块，像其他模块一样，注册成模块才能供其他的地方使用，并且不用import
