@@ -1,18 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
-
-// 定义数据类型
-// 首先我们要明白，一个商品有哪些属性，
-export interface Product {
-  id: number;
-  title: string; // 商品标题
-  price: number; // 价格
-  coverUrl?: string; // 封面图链接
-  tags?: string[]; // 标签（比如：京东超市、包邮、看相似）
-  commentCount?: string; // 评论数（比如：100+条评论）
-  shopName?: string; // 店铺名称
-}
+import { Product } from './dto/ create-product.dto';
 
 @Injectable()
 export class ProductsService {
