@@ -45,22 +45,32 @@ pnpm add class-validator class-transformer
 使用docker compose up -d 启动docker
 
 数据库启动以后，我们开始配置orm,orm我们使用prisma
-pnpm add -D prisma
-pnpm add @prisma/client
+pnpm add -D prisma @types/pg
+pnpm add @prisma/client @prisma/adapter-pg pg
+// Prisma 7 不再支持直连数据库，需要通过 Driver Adapter 连接
+// @prisma/adapter-pg 是 PostgreSQL 的适配器，pg 是 Node.js 的 PostgreSQL 驱动
+// @types/pg 是 pg 的 TypeScript 类型定义
 初始化 npx prisma init
-初始化后，项目会多一个prisma文件夹和一个.env文件
-打开.env文件，找到database，修改为在docker-compose配置的账户和密码
-格式: postgresql://账号:密码@localhost:端口/库名
+初始化后，项目会多一个prisma文件夹，但 Prisma 7 不再自动生成 .env 文件
+需要手动在项目根目录创建 .env 文件，写入数据库连接字符串：
+DATABASE_URL="postgresql://账号:密码@localhost:端口/库名"
+// 对应我们 docker-compose.yml 中的配置，实际值为：
+// DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/shopping_cart"
 然后在prisma/schema.prisma 里定义数据模型
 数据模型定义好以后，使用命令让Prisma去数据库中真正的创建这张表，使用下面的命令
 npx prisma migrate dev --name init // migrate dev 开发模式迁移 --name init 给这次修改起名，比如说初始化
 // 开发模式迁移就是数据库的版本控制系统(git) 会把数据库每一次的改动记录成档案
 // 开发模式会对比现在的和实际情况，然后把改动翻译成数据库听得懂的SQL语句，并存入prisma/migrations文件中 然后在数据库执行这些SQL语句，让表结构真正的发生变化 --name init 就像 Git 的 Commit Message
-Prisma 7更新以后，url      = env("DATABASE_URL")的配置现在在prisma.config.ts中了，不去schema.prisame中修改
+Prisma 7更新以后，url = env("DATABASE_URL")的配置现在在prisma.config.ts中了，不去schema.prisma中修改
 如果显示 All migrations have been successfully applied，那么PostgreSQL 里已经有一张 Product 表了。
 
 为了能在 Service 里优雅地使用 Prisma，我们需要把它封装成一个 NestJS 的 Service
-在 src 下新建一个文件 prisma.service.ts，封装成全局的prisam依赖，供其他地方注入调用
+在 src 下新建一个文件 prisma.service.ts，封装成全局的prisma依赖，供其他地方注入调用
+Prisma 7 的关键变化：不再支持直连数据库，需要通过 Driver Adapter 连接
+在 prisma.service.ts 中：
+1. 用 pg 的 Pool 创建数据库连接池
+2. 用 @prisma/adapter-pg 的 PrismaPg 创建适配器
+3. 在 super() 中传入 { adapter } 完成初始化
 封装好以后，我们需要新建一个src/prisma.module.ts 这个模块的目的是把上述的prisma注册成全局模块，像其他模块一样，注册成模块才能供其他的地方使用，并且不用import
 
 注册成功以后，我们就可以改造其他模块的操作了，从fs文件读写逻辑，全部换成数据库操作
