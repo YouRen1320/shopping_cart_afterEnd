@@ -1,187 +1,273 @@
-1. 这个是购物城项目的后端部分 仿造京东
+# 🛒 购物城后端 —— 仿京东
 
-2. 功能部分
-   1. 四个模块，首页，分类，购物车，我的
+> 使用 **NestJS + PostgreSQL + Prisma 7 + Docker** 构建的购物商城后端 API
 
-nesj new shopping_cart_afterEnd // 创建一个新的nestjs项目
+## 技术栈
 
-如果已经在文件夹中，使用 nest new . 在此文件夹中创建nestjs项目的文件结构
+| 技术            | 用途                     |
+| --------------- | ------------------------ |
+| NestJS          | 后端框架（基于 Express） |
+| PostgreSQL 15   | 关系型数据库             |
+| Prisma 7        | ORM（操作数据库的工具）  |
+| Docker          | 容器化运行 PostgreSQL    |
+| class-validator | 数据验证管道             |
 
-nestjs最基础的三个概念
+## 项目结构
 
-1. controller 控制器 控制器只接受前端的请求和发出响应，本身不做逻辑处理
-2. service服务 服务主要用于处理业务逻辑，计算价格，或者从数据库拿数据
-3. module模块，模块的作用就是把控制器和服务组织在一起，类似于flutter里getx中的module，主要也是做中间处理
+```
+src/
+├── main.ts                 # 入口文件，启动应用、设置全局管道
+├── app.module.ts           # 根模块，组织所有子模块
+├── app.controller.ts       # 根控制器（首页路由 /）
+├── app.service.ts          # 根服务
+├── prisma.service.ts       # Prisma 数据库服务（全局）
+├── prisma.module.ts        # Prisma 模块（注册为全局模块）
+├── products/               # 📦 商品模块
+│   ├── products.module.ts
+│   ├── products.controller.ts   # 路由：/products
+│   ├── products.service.ts      # 商品业务逻辑（Prisma 操作数据库）
+│   └── dto/
+│       └── create-product.dto.ts  # 创建商品的数据格式定义
+├── cart/                   # 🛒 购物车模块
+│   ├── cart.module.ts
+│   ├── cart.controller.ts       # 路由：/cart
+│   ├── cart.service.ts          # 购物车业务逻辑（文件存储）
+│   └── dto/
+│       └── create-cart.dto.ts     # 添加购物车的数据格式定义
+└── orders/                 # 📋 订单模块
+    ├── orders.module.ts
+    ├── orders.controller.ts     # 路由：/orders
+    ├── orders.service.ts        # 订单业务逻辑（文件存储）
+    └── dto/
+        └── orders.dto.ts          # 订单和购物车项的数据格式定义
+```
 
-使用nest cli快速创建结构
-nest g resource products
-此时终端会问你2个问题1.使用什么作为传输层？ REST API 2.是否生成增删改查模版？n
+## 快速开始
 
-同时nestjs非常智能，他会自动把模块注册到app.module.ts中。
+### 1. 安装依赖
 
-然后我们先去service层编写逻辑
-我们需要在一个数组中存几个商品，并提供一个方法把他们拿出来
-service逻辑写好了以后，我们就去controller中触发业务逻辑
+```bash
+pnpm install
+```
 
-接下来开始创建购物车模块
-nest g resource cart
-这里，我们需要理解DTO(数据传输对象) 用户往购物车加东西的时候，需要传给我什么数据
-一般来说：数量要，商品id需要
-在nestjs中，我们通常用一个专门的类来定义这种数据格式，叫DTO
+### 2. 启动 Docker（PostgreSQL 数据库）
 
-让购物车可以调用商品
-需要在商品module中把商品暴露出去
-然后在购物车中调用商品函数
+```bash
+docker compose up -d
+```
 
-为了数据安全，我们需要引入管道，管道的作用就是转换数据和验证数据是否合规
-pnpm add class-validator class-transformer
-然后我们需要在main.ts中设置全局验证管道
-管道的作用就是在数据发送到业务层前判断数据格式是否合规用的，防止接口得到不正常的数据
+### 3. 配置环境变量
 
-然后我们开始连接数据库 NestJS + PostgreSQL + Prisma + Docker
-新建docker-compose.yml文件，在文件中配置docker信息
-使用docker compose up -d 启动docker
+项目根目录创建 `.env` 文件：
 
-数据库启动以后，我们开始配置orm,orm我们使用prisma
+```
+DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/shopping_cart"
+```
+
+### 4. 数据库迁移（创建数据表）
+
+```bash
+npx prisma migrate dev --name init
+```
+
+### 5. 启动开发服务器
+
+```bash
+pnpm start:dev
+```
+
+服务运行在 `http://localhost:3000`
+
+---
+
+## API 接口
+
+### 📦 商品 `/products`
+
+| 方法 | 路径        | 说明         | 请求体                             |
+| ---- | ----------- | ------------ | ---------------------------------- |
+| GET  | `/products` | 获取所有商品 | —                                  |
+| POST | `/products` | 上架新商品   | `{ "name": "苹果", "price": 100 }` |
+
+### 🛒 购物车 `/cart`
+
+| 方法 | 路径    | 说明             | 请求体                              |
+| ---- | ------- | ---------------- | ----------------------------------- |
+| GET  | `/cart` | 查看购物车       | —                                   |
+| POST | `/cart` | 添加商品到购物车 | `{ "productId": 1, "quantity": 2 }` |
+
+### 📋 订单 `/orders`
+
+| 方法 | 路径      | 说明                   | 请求体 |
+| ---- | --------- | ---------------------- | ------ |
+| GET  | `/orders` | 查看所有历史订单       | —      |
+| POST | `/orders` | 提交订单（基于购物车） | —      |
+
+---
+
+## 学习笔记
+
+### 一、NestJS 核心三件套
+
+1. **Controller（控制器）**：只负责接收请求和发出响应，本身不做逻辑处理
+2. **Service（服务）**：处理业务逻辑，比如计算价格、操作数据库
+3. **Module（模块）**：把控制器和服务组织在一起，是 NestJS 的组织单元
+
+使用 CLI 快速创建模块结构：
+
+```bash
+nest g resource products  # 创建商品模块
+nest g resource cart      # 创建购物车模块
+```
+
+终端会问你：1. 使用什么传输层？选 REST API 2. 是否生成增删改查模板？选 n
+
+NestJS 会自动把新模块注册到 `app.module.ts` 中。
+
+### 二、依赖注入
+
+NestJS 最强大的地方就是**依赖注入**。你不需要手动 `new` 一个服务实例，只要在 `constructor` 里声明类型，NestJS 自动帮你创建并传入：
+
+```typescript
+constructor(private prisma: PrismaService) {}
+// 之后就可以用 this.prisma 操作数据库
+```
+
+### 三、DTO（数据传输对象）
+
+DTO 是用来定义"用户需要传给接口什么数据"的类，配合 `class-validator` 实现数据验证：
+
+```typescript
+export class CreateProductDto {
+  @IsString({ message: '商品名称必须是字符串' })
+  @IsNotEmpty({ message: '商品名称不能为空' })
+  name: string;
+
+  @IsNumber({}, { message: '价格必须为数字' })
+  @Min(0.01, { message: '价格不能小于0.01' })
+  price: number;
+}
+```
+
+需要在 `main.ts` 中开启全局验证管道，所有接口都会先经过验证：
+
+```typescript
+app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+// whitelist: true → 自动剔除 DTO 中没定义的属性，防止恶意数据注入
+```
+
+### 四、数据库配置（Docker + PostgreSQL + Prisma 7）
+
+#### 启动数据库
+
+`docker-compose.yml` 配置了 PostgreSQL 容器：
+
+```yaml
+services:
+  db:
+    image: postgres:15-alpine
+    ports: ['5432:5432']
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: shopping_cart
+```
+
+```bash
+docker compose up -d  # 后台启动
+```
+
+#### 安装 Prisma 依赖
+
+```bash
 pnpm add -D prisma @types/pg
 pnpm add @prisma/client @prisma/adapter-pg pg
-// Prisma 7 不再支持直连数据库，需要通过 Driver Adapter 连接
-// @prisma/adapter-pg 是 PostgreSQL 的适配器，pg 是 Node.js 的 PostgreSQL 驱动
-// @types/pg 是 pg 的 TypeScript 类型定义
-初始化 npx prisma init
-初始化后，项目会多一个prisma文件夹，但 Prisma 7 不再自动生成 .env 文件
-需要手动在项目根目录创建 .env 文件，写入数据库连接字符串：
-DATABASE_URL="postgresql://账号:密码@localhost:端口/库名"
-// 对应我们 docker-compose.yml 中的配置，实际值为：
-// DATABASE_URL="postgresql://myuser:mypassword@localhost:5432/shopping_cart"
-然后在prisma/schema.prisma 里定义数据模型
-数据模型定义好以后，使用命令让Prisma去数据库中真正的创建这张表，使用下面的命令
-npx prisma migrate dev --name init // migrate dev 开发模式迁移 --name init 给这次修改起名，比如说初始化
-// 开发模式迁移就是数据库的版本控制系统(git) 会把数据库每一次的改动记录成档案
-// 开发模式会对比现在的和实际情况，然后把改动翻译成数据库听得懂的SQL语句，并存入prisma/migrations文件中 然后在数据库执行这些SQL语句，让表结构真正的发生变化 --name init 就像 Git 的 Commit Message
-Prisma 7更新以后，url = env("DATABASE_URL")的配置现在在prisma.config.ts中了，不去schema.prisma中修改
-如果显示 All migrations have been successfully applied，那么PostgreSQL 里已经有一张 Product 表了。
+```
 
-为了能在 Service 里优雅地使用 Prisma，我们需要把它封装成一个 NestJS 的 Service
-在 src 下新建一个文件 prisma.service.ts，封装成全局的prisma依赖，供其他地方注入调用
-Prisma 7 的关键变化：不再支持直连数据库，需要通过 Driver Adapter 连接
-在 prisma.service.ts 中：
+| 包名                 | 用途                               |
+| -------------------- | ---------------------------------- |
+| `prisma`             | Prisma CLI 工具（迁移、生成等）    |
+| `@prisma/client`     | Prisma 客户端（代码中操作数据库）  |
+| `@prisma/adapter-pg` | PostgreSQL 适配器（Prisma 7 必须） |
+| `pg`                 | Node.js PostgreSQL 驱动            |
+| `@types/pg`          | pg 的 TypeScript 类型定义          |
 
-1. 用 pg 的 Pool 创建数据库连接池
-2. 用 @prisma/adapter-pg 的 PrismaPg 创建适配器
-3. 在 super() 中传入 { adapter } 完成初始化
-   封装好以后，我们需要新建一个src/prisma.module.ts 这个模块的目的是把上述的prisma注册成全局模块，像其他模块一样，注册成模块才能供其他的地方使用，并且不用import
+#### 初始化与迁移
 
-注册成功以后，我们就可以改造其他模块的操作了，从fs文件读写逻辑，全部换成数据库操作
-在其他模块使用的话，先constructor(private prisma: PrismaService) {} 注入prisma，就可以使用了，依赖注入
+```bash
+npx prisma init          # 初始化，生成 prisma/ 文件夹
+npx prisma migrate dev --name init  # 把 schema 同步到数据库
+npx prisma generate      # 重新生成 Prisma Client
+```
 
-下面是prisma的方法：
-// 查所有商品
-this.prisma.product.findMany()
+> **注意**：Prisma 7 不再自动生成 `.env` 文件，需要手动创建。
+> `prisma.config.ts` 中配置 `datasource` 的 `url`，不在 `schema.prisma` 中配置。
 
-// 加条件：查价格大于 100 的商品
+#### Prisma 7 的关键变化：Driver Adapter
+
+Prisma 7 不再支持直连数据库，必须通过 **Driver Adapter** 连接：
+
+```typescript
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
+
+const pool = new Pool({ connectionString: process.env['DATABASE_URL'] });
+const adapter = new PrismaPg(pool);
+
+// 在 PrismaService 的 constructor 中
+super({ adapter });
+```
+
+封装好后注册为全局模块（`prisma.module.ts`），其他模块通过依赖注入直接使用。
+
+### 五、Prisma 常用方法速查
+
+```typescript
+// 增
+this.prisma.product.create({ data: { name: '苹果', price: 5.5 } })
+this.prisma.product.createMany({ data: [...] })
+
+// 删
+this.prisma.product.delete({ where: { id: 1 } })
+this.prisma.product.deleteMany({ where: { description: null } })
+
+// 改
+this.prisma.product.update({ where: { id: 1 }, data: { price: 9.9 } })
+this.prisma.product.updateMany({ where: { price: { lt: 5 } }, data: { price: 5 } })
+
+// 查
+this.prisma.product.findMany()                              // 查所有
+this.prisma.product.findUnique({ where: { id: 1 } })       // 按主键查一个
+this.prisma.product.findFirst({ where: { name: '苹果' } })  // 按条件查第一个
+this.prisma.product.count()                                  // 计数
+```
+
+**高级查询选项：**
+
+```typescript
 this.prisma.product.findMany({
-where: { price: { gt: 100 } }
-})
+  where: { price: { gt: 100 } }, // 条件过滤
+  orderBy: { price: 'asc' }, // 排序（asc 升序 / desc 降序）
+  skip: 5,
+  take: 10, // 分页
+  select: { name: true, price: true }, // 只返回部分字段
+});
+```
 
-// 排序：按价格从低到高
-this.prisma.product.findMany({
-orderBy: { price: 'asc' } // 'desc' 就是从高到低
-})
+**where 条件运算符：**
 
-// 分页：跳过前5条，取10条（第2页，每页10条）
-this.prisma.product.findMany({
-skip: 5,
-take: 10
-})
+| 写法                             | 含义     | SQL 等价               |
+| -------------------------------- | -------- | ---------------------- |
+| `{ price: 10 }`                  | 等于     | `price = 10`           |
+| `{ price: { gt: 10 } }`          | 大于     | `price > 10`           |
+| `{ price: { gte: 10 } }`         | 大于等于 | `price >= 10`          |
+| `{ price: { lt: 10 } }`          | 小于     | `price < 10`           |
+| `{ price: { lte: 10 } }`         | 小于等于 | `price <= 10`          |
+| `{ name: { contains: '苹' } }`   | 包含     | `name LIKE '%苹%'`     |
+| `{ name: { startsWith: '苹' } }` | 开头     | `name LIKE '苹%'`      |
+| `{ price: { in: [5, 10, 15] } }` | 在列表中 | `price IN (5, 10, 15)` |
+| `{ description: null }`          | 为空     | `IS NULL`              |
+| `{ NOT: { price: 10 } }`         | 不等于   | `price != 10`          |
+| `{ OR: [{...}, {...}] }`         | 或       | `... OR ...`           |
 
-// 只返回部分字段
-this.prisma.product.findMany({
-select: { name: true, price: true } // 只要名字和价格
-})
-// 根据 id 查（id 是 @id 主键，天然唯一）
-this.prisma.product.findUnique({
-where: { id: 1 }
-})
-// 找不到会返回 null
-// 找第一个名字叫"苹果"的商品
-this.prisma.product.findFirst({
-where: { name: '苹果' }
-})
-// 和 findUnique 的区别：findUnique 只能用唯一字段（如 id）
-// findFirst 可以用任何字段
-
-this.prisma.product.create({
-data: {
-name: '苹果',
-price: 5.5,
-description: '新鲜红富士', // 可选字段
-}
-})
-// id、createdAt、updatedAt 自动生成，不用传
-
-this.prisma.product.createMany({
-data: [
-{ name: '苹果', price: 5.5 },
-{ name: '香蕉', price: 3.0 },
-{ name: '橘子', price: 4.0 },
-]
-})
-// 一次插入多条，比循环调用 create 快很多
-
-// 把 id=1 的商品价格改成 9.9
-this.prisma.product.update({
-where: { id: 1 }, // 找到谁
-data: { price: 9.9 } // 改什么
-})
-
-// 所有价格低于 5 的商品，价格统一改成 5
-this.prisma.product.updateMany({
-where: { price: { lt: 5 } },
-data: { price: 5 }
-})
-
-// 删除 id=1 的商品
-this.prisma.product.delete({
-where: { id: 1 }
-})
-
-// 删除所有没有描述的商品
-this.prisma.product.deleteMany({
-where: { description: null }
-})
-
-// 删除全部（危险！）
-this.prisma.product.deleteMany()
-
-// 一共有多少商品
-this.prisma.product.count()
-
-// 价格大于 10 的有几个
-this.prisma.product.count({
-where: { price: { gt: 10 } }
-})
-
-六、where 条件速查表
-where 里除了直接 = 等于，还支持很多条件运算符：
-
-写法 含义 SQL 等价
-{ price: 10 } 等于 price = 10
-{ price: { gt: 10 } } 大于 price > 10
-{ price: { gte: 10 } } 大于等于 price >= 10
-{ price: { lt: 10 } } 小于 price < 10
-{ price: { lte: 10 } } 小于等于 price <= 10
-{ name: { contains: '苹' } } 包含 name LIKE '%苹%'
-{ name: { startsWith: '苹' } } 开头 name LIKE '苹%'
-{ price: { in: [5, 10, 15] } } 在列表中 price IN (5, 10, 15)
-{ description: null } 为空 description IS NULL
-{ NOT: { price: 10 } } 不等于 price != 10
-{ OR: [{ price: 5 }, { price: 10 }] } 或 price=5 OR price=10
-
-记忆口诀
-增用
-create
-，删用 delete，改用 update，查用
-find
-
-操作多条加 Many，条件写在 where 里，数据写在 data 里
+> 💡 **记忆口诀**：增用 `create`，删用 `delete`，改用 `update`，查用 `find`。操作多条加 `Many`，条件写在 `where` 里，数据写在 `data` 里。
