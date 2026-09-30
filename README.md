@@ -78,13 +78,21 @@ src/
 pnpm install
 ```
 
-### 2. 启动 Docker（PostgreSQL + Redis）
+### 2. 生成 Prisma Client
+
+Prisma 7 不再在安装时自动生成客户端，需显式执行（只生成代码，不运行迁移）：
+
+```bash
+pnpm exec prisma generate
+```
+
+### 3. 启动 Docker（PostgreSQL + Redis）
 
 ```bash
 docker compose up -d
 ```
 
-### 3. 配置环境变量
+### 4. 配置环境变量
 
 项目根目录创建 `.env` 文件：
 
